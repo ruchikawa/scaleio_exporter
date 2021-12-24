@@ -1,8 +1,10 @@
 package server
 
-type args struct {
+type Args struct {
 	Port     int
 	Refresh  int
 	Username string
 	Password string
+	IPAddr   string
+	Insecure bool
 }

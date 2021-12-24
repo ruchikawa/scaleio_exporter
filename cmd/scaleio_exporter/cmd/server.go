@@ -1,51 +1,92 @@
-/*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 package cmd
 
 import (
-	"fmt"
+	"log"
+
+	"github.com/ruchikawa/scaleio_exporter/pkg/server"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"golang.org/x/xerrors"
 )
 
 // serverCmd represents the server command
-var serverCmd = &cobra.Command{
-	Use:   "server",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+func serverCmd() *cobra.Command {
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("server called")
-	},
-}
+	serverArgs := &server.Args{}
 
-func init() {
-	rootCmd.AddCommand(serverCmd)
+	serverCmd := &cobra.Command{
+		Use:          "server",
+		Short:        "Starts scaleio_exporter as a server",
+		SilenceUsage: true,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				return xerrors.Errorf("%q is an invalid argument", args[0])
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return server.Run(serverArgs)
+		},
+	}
 
-	// Here you will define your flags and configuration settings.
+	serverCmd.PersistentFlags().IntVarP(
+		&serverArgs.Port,
+		"port",
+		"p",
+		10000,
+		"Exporter Listen Port",
+	)
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// serverCmd.PersistentFlags().String("foo", "", "A help for foo")
+	serverCmd.PersistentFlags().IntVarP(
+		&serverArgs.Refresh,
+		"refresh",
+		"r",
+		300,
+		"Refresh Interval Seconds",
+	)
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// serverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	serverCmd.PersistentFlags().StringVarP(
+		&serverArgs.Username,
+		"username",
+		"u",
+		"",
+		"Username for ScaleIO",
+	)
+
+	serverCmd.PersistentFlags().StringVarP(
+		&serverArgs.Password,
+		"password",
+		"",
+		"",
+		"Password for ScaleIO",
+	)
+
+	serverCmd.PersistentFlags().StringVarP(
+		&serverArgs.IPAddr,
+		"ipaddr",
+		"i",
+		"",
+		"Specify ScaleIO IPaddress",
+	)
+
+	serverCmd.PersistentFlags().BoolVarP(
+		&serverArgs.Insecure,
+		"insecure",
+		"k",
+		true,
+		"Skip Verify Ceritificate(Insecure)",
+	)
+
+	if err := viper.BindPFlags(serverCmd.PersistentFlags()); err != nil {
+		log.Fatalf("Failed to bind flags : %v\n", err)
+	}
+
+	cobra.OnInitialize(func() {
+		viper.AutomaticEnv()
+		if err := viper.Unmarshal(&serverArgs); err != nil {
+			log.Fatalf("Failed to unmarshal arguments: %v\n", err)
+		}
+	})
+	return serverCmd
 }
