@@ -86,7 +86,6 @@ func getStats(args *Args) {
 			log.Fatal(error)
 		}
 
-		log.Println(string(body))
 		err = json.Unmarshal(body, &p)
 		if err != nil {
 			log.Println(err)

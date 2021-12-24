@@ -5,7 +5,6 @@ type Args struct {
 	Refresh  int
 	Username string
 	Password string
-	Server   string
 	IPAddr   string
 	Insecure bool
 }

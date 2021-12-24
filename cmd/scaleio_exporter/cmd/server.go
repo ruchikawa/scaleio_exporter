@@ -65,9 +65,9 @@ func serverCmd() *cobra.Command {
 	serverCmd.PersistentFlags().StringVarP(
 		&serverArgs.IPAddr,
 		"ipaddr",
+		"i",
 		"",
-		"",
-		"IP Address of ScaleIO",
+		"Specify ScaleIO IPaddress",
 	)
 
 	serverCmd.PersistentFlags().BoolVarP(
